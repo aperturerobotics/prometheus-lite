@@ -23,8 +23,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/model/exemplar"
+		"github.com/prometheus/prometheus/model/exemplar"
 	"github.com/prometheus/prometheus/model/histogram"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/util/testutil"
@@ -57,7 +56,7 @@ func TestNewParser(t *testing.T) {
 
 	for name, tt := range map[string]*struct {
 		contentType            string
-		fallbackScrapeProtocol config.ScrapeProtocol
+		fallbackScrapeProtocol string
 		validateParser         func(*testing.T, Parser)
 		err                    string
 	}{
@@ -67,7 +66,7 @@ func TestNewParser(t *testing.T) {
 		},
 		"empty-string-fallback-text-plain": {
 			validateParser:         requirePromParser,
-			fallbackScrapeProtocol: config.PrometheusText0_0_4,
+			fallbackScrapeProtocol: "PrometheusText.0.0.4",
 			err:                    "non-compliant scrape target sending blank Content-Type, using fallback_scrape_protocol \"text/plain\"",
 		},
 		"invalid-content-type-1": {
@@ -78,19 +77,19 @@ func TestNewParser(t *testing.T) {
 		"invalid-content-type-1-fallback-text-plain": {
 			contentType:            "invalid/",
 			validateParser:         requirePromParser,
-			fallbackScrapeProtocol: config.PrometheusText0_0_4,
+			fallbackScrapeProtocol: "PrometheusText.0.0.4",
 			err:                    "expected token after slash",
 		},
 		"invalid-content-type-1-fallback-openmetrics": {
 			contentType:            "invalid/",
 			validateParser:         requireOpenMetricsParser,
-			fallbackScrapeProtocol: config.OpenMetricsText0_0_1,
+			fallbackScrapeProtocol: "OpenMetricsText.0.0.1",
 			err:                    "expected token after slash",
 		},
 		"invalid-content-type-1-fallback-protobuf": {
 			contentType:            "invalid/",
 			validateParser:         requireProtobufParser,
-			fallbackScrapeProtocol: config.PrometheusProto,
+			fallbackScrapeProtocol: "PrometheusProto",
 			err:                    "expected token after slash",
 		},
 		"invalid-content-type-2": {
@@ -158,7 +157,7 @@ func TestNewParser(t *testing.T) {
 		"some-other-valid-content-type-fallback-text-plain": {
 			contentType:            "text/html",
 			validateParser:         requirePromParser,
-			fallbackScrapeProtocol: config.PrometheusText0_0_4,
+			fallbackScrapeProtocol: "PrometheusText.0.0.4",
 			err:                    "received unsupported Content-Type \"text/html\", using fallback_scrape_protocol \"text/plain\"",
 		},
 	} {

@@ -179,14 +179,9 @@ func New(b []byte, contentType string, st *labels.SymbolTable, opts ParserOption
 			o.enableTypeAndUnitLabels = opts.EnableTypeAndUnitLabels
 		})
 	case "application/vnd.google.protobuf":
-		return NewProtobufParser(
-			b,
-			opts.IgnoreNativeHistograms,
-			opts.KeepClassicOnClassicAndNativeHistograms,
-			opts.ConvertClassicHistogramsToNHCB,
-			opts.EnableTypeAndUnitLabels,
-			st,
-		), err
+		// The protobuf exposition parser left with the scrape subsystem;
+		// a protobuf content type is not parseable in the slim fork.
+		return nil, fmt.Errorf("content type %q has no parser in the slim fork", mediaType)
 	case "text/plain":
 		baseParser = NewPromParser(b, st, opts.EnableTypeAndUnitLabels)
 	default:
