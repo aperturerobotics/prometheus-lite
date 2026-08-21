@@ -9,7 +9,7 @@ fail=0
 # Zero product imports: no product module root may appear anywhere in the
 # closure. Generic shared infrastructure (aperturerobotics/common, util,
 # starpc) is not a product root and stays allowed.
-product_re='github\.com/(s4wave/spacewave|aperturerobotics/glados)(/|$)'
+product_re='github\.com/(s4wave/spacewave|aperturerobotics/glados|paralin/mercury-game)(/|$)'
 if grep -Eq "$product_re" go.mod; then
   echo "FAIL: product module referenced in go.mod:"
   grep -E "$product_re" go.mod
