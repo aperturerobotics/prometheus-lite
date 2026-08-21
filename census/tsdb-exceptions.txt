@@ -1,0 +1,4 @@
+# tsdb subpackages retained by the plan: pure chunk codecs and the canonical
+# staleness marker helpers. Everything else under tsdb is deleted.
+tsdb/chunkenc
+tsdb/tsdbutil

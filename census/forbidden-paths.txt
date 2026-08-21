@@ -1,0 +1,17 @@
+# One forbidden repository path prefix per line. The deletion census fails
+# while any of these exists or remains in the retained dependency closure.
+# This list mirrors the accepted plan's deletion set: server, web UI,
+# scrape/discovery, rules/notifier, remote storage, agent, WAL, local TSDB
+# database, index, compactor, lock, snapshot, and filesystem backends.
+cmd/prometheus
+cmd/promtool
+web
+scrape
+discovery
+rules
+notifier
+storage/remote
+storage/filesystem
+documentation
+consoles
+plugins
