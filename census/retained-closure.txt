@@ -1,0 +1,41 @@
+# Predicted retained in-module closure for the slim fork, derived from the
+# v3.14.0 import blocks of promql/engine.go, promql/functions.go, and
+# storage/interface.go (read from upstream source, not inferred).
+#
+# VERIFIED imports of the retained roots:
+#   promql/engine.go:    model/histogram, model/labels, model/timestamp,
+#                        model/value, promql/parser(+posrange), schema,
+#                        storage, tsdb/chunkenc, util/annotations,
+#                        util/features, util/kahansum, util/logging,
+#                        util/stats, util/zeropool
+#   promql/functions.go: model/histogram, model/labels, promql/parser(+posrange),
+#                        schema, util/annotations, util/kahansum
+#   storage/interface.go: model/exemplar, model/histogram, model/labels,
+#                        model/metadata, tsdb/chunkenc, tsdb/chunks,
+#                        util/annotations
+#
+# Consequences:
+# - The top-level schema package is part of the engine build and is RETAINED;
+#   it must not join the forbidden list.
+# - The small util helpers above are RETAINED; util/ as a whole stays outside
+#   the forbidden list.
+# - storage/interface.go imports tsdb/chunks. TO-CONFIRM at the cut: either
+#   allowlist the pure parts of tsdb/chunks or trim the chunks usage from the
+#   retained storage surface. Decide when the pinned tree is local.
+#
+# Deletion candidates inside otherwise-retained dirs:
+# - promql/query_logger.go implements file-locked active-query tracking, a
+#   local-disk server surface the plan deletes; drop it with the server.
+# - promql/promqltest is a test-helper package; keep only if the retained
+#   suite uses it.
+model/
+promql/
+schema/
+storage/
+tsdb/chunkenc
+util/annotations
+util/features
+util/kahansum
+util/logging
+util/stats
+util/zeropool
