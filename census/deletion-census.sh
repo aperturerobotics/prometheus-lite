@@ -16,6 +16,8 @@ done < census/forbidden-paths.txt
 if [ -d tsdb ]; then
   while IFS= read -r d; do
     rel=${d#./}
+    # The tsdb root is a container for the allowlisted pure packages.
+    if [ "$rel" = "tsdb" ]; then continue; fi
     keep=0
     while read -r e; do
       case "$e" in ''|'#'*) continue ;; esac
