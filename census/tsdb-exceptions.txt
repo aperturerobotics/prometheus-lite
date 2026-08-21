@@ -1,4 +1,10 @@
-# tsdb subpackages retained by the plan: pure chunk codecs and the canonical
-# staleness marker helpers. Everything else under tsdb is deleted.
+# tsdb subpackages retained by the plan: pure chunk codecs and their direct
+# helpers. Everything else under tsdb is deleted.
+#
+# Verified at upstream v3.14.0: the canonical staleness marker is
+# model/value.StaleNaN (uint64 0x7ff0000000000002) with
+# model/value.IsStaleNaN, inside the retained model/ tree. The chunkenc
+# codecs (xor.go, xor2.go) and promql/engine.go import model/value, so the
+# marker needs no tsdb exception of its own.
 tsdb/chunkenc
 tsdb/tsdbutil
