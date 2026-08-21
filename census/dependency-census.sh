@@ -6,8 +6,10 @@ cd "$(dirname "$0")/.."
 
 fail=0
 
-# Zero product imports: no company module may appear anywhere in the closure.
-product_re='aperturerobotics/(spacewave|common|util|starpc|glados|hemi-v)(/|$)'
+# Zero product imports: no product module root may appear anywhere in the
+# closure. Generic shared infrastructure (aperturerobotics/common, util,
+# starpc) is not a product root and stays allowed.
+product_re='github\.com/(s4wave/spacewave|aperturerobotics/glados)(/|$)'
 if grep -Eq "$product_re" go.mod; then
   echo "FAIL: product module referenced in go.mod:"
   grep -E "$product_re" go.mod
