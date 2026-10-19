@@ -23,7 +23,6 @@ import (
 	"log/slog"
 	"maps"
 	"math"
-	"reflect"
 	"runtime"
 	"slices"
 	"sort"
@@ -35,9 +34,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/prometheus/prometheus/model/histogram"
 	"github.com/prometheus/prometheus/model/labels"
@@ -59,7 +55,6 @@ import (
 const (
 	namespace            = "prometheus"
 	subsystem            = "engine"
-	queryTag             = "query"
 	env                  = "query execution"
 	defaultLookbackDelta = 5 * time.Minute
 
@@ -247,10 +242,6 @@ func (q *query) Close() {
 
 // Exec implements the Query interface.
 func (q *query) Exec(ctx context.Context) *Result {
-	if span := trace.SpanFromContext(ctx); span != nil {
-		span.SetAttributes(attribute.String(queryTag, q.stmt.String()))
-	}
-
 	// Exec query.
 	res, warnings, err := q.ng.exec(ctx, q)
 	return &Result{Err: err, Value: res, Warnings: warnings}
@@ -713,13 +704,6 @@ func (ng *Engine) exec(ctx context.Context, q *query) (v parser.Value, ws annota
 				f = append(f, slog.Any("error", err))
 			}
 			f = append(f, slog.Any("stats", stats.NewQueryStats(q.Stats())))
-			if span := trace.SpanFromContext(ctx); span != nil {
-				spanCtx := span.SpanContext()
-				f = append(f,
-					slog.Any("spanID", spanCtx.SpanID()),
-					slog.Any("traceID", spanCtx.TraceID()),
-				)
-			}
 			if origin := ctx.Value(QueryOrigin{}); origin != nil {
 				for k, v := range origin.(map[string]any) {
 					f = append(f, slog.Any(k, v))
@@ -1113,8 +1097,6 @@ func checkAndExpandSeriesSet(ctx context.Context, expr parser.Expr) (annotations
 		if e.Series != nil {
 			return nil, nil
 		}
-		span := trace.SpanFromContext(ctx)
-		span.AddEvent("expand start", trace.WithAttributes(attribute.String("selector", e.String())))
 		series, ws, err := expandSeriesSet(ctx, e.UnexpandedSeriesSet)
 		if e.SkipHistogramBuckets {
 			for i := range series {
@@ -1122,7 +1104,6 @@ func checkAndExpandSeriesSet(ctx context.Context, expr parser.Expr) (annotations
 			}
 		}
 		e.Series = series
-		span.AddEvent("expand end", trace.WithAttributes(attribute.Int("num_series", len(series))))
 		return ws, err
 	}
 	return nil, nil
@@ -2061,13 +2042,6 @@ func (ev *evaluator) eval(ctx context.Context, expr parser.Expr) (parser.Value, 
 
 	numSteps := int((ev.endTimestamp-ev.startTimestamp)/ev.interval) + 1
 
-	// Create a new span to help investigate inner evaluation performances.
-	ctx, span := otel.Tracer("").Start(ctx, stats.InnerEvalTime.SpanOperation()+" eval "+reflect.TypeOf(expr).String())
-	defer span.End()
-	if ss, ok := expr.(interface{ ShortString() string }); ok {
-		span.SetAttributes(attribute.String("operation", ss.ShortString()))
-	}
-
 	switch e := expr.(type) {
 	case *parser.AggregateExpr:
 		// Grouping labels must be sorted (expected both by generateGroupingKey() and aggregation()).
@@ -2523,13 +2497,11 @@ func (ev *evaluator) eval(ctx context.Context, expr parser.Expr) (parser.Value, 
 		}
 
 	case *parser.NumberLiteral:
-		span.SetAttributes(attribute.Float64("value", e.Val))
 		return ev.rangeEval(ctx, nil, func(_ []Vector, _ Matrix, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, annotations.Annotations) {
 			return append(enh.Out, Sample{F: e.Val, Metric: labels.EmptyLabels()}), nil
 		})
 
 	case *parser.StringLiteral:
-		span.SetAttributes(attribute.String("value", e.Val))
 		return String{V: e.Val, T: ev.startTimestamp}, nil
 
 	case *parser.VectorSelector:

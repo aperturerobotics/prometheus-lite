@@ -19,8 +19,6 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // QueryTiming identifies the code area or functionality in which time is spent
@@ -217,29 +215,23 @@ func (qs *QuerySamples) samplesReadPerStepPoints() []stepStat {
 	return ts
 }
 
-// SpanTimer unifies tracing and timing, to reduce repetition.
+// SpanTimer times an operation and reports it to observers.
 type SpanTimer struct {
 	timer     *Timer
 	observers []prometheus.Observer
-
-	span trace.Span
 }
 
 func NewSpanTimer(ctx context.Context, operation string, timer *Timer, observers ...prometheus.Observer) (*SpanTimer, context.Context) {
-	ctx, span := otel.Tracer("").Start(ctx, operation)
 	timer.Start()
 
 	return &SpanTimer{
 		timer:     timer,
 		observers: observers,
-
-		span: span,
 	}, ctx
 }
 
 func (s *SpanTimer) Finish() {
 	s.timer.Stop()
-	s.span.End()
 
 	for _, obs := range s.observers {
 		obs.Observe(s.timer.ElapsedTime().Seconds())
